@@ -1,0 +1,277 @@
+<project name="SmartView" default="updatesim" basedir=".">
+	<!-- ***************************************************************** -->
+	<!-- TARGET BLACKBERRY OS VERSION                              		   -->
+	<!-- Can be either: 4.0.2, 4.1.0, 4.2.0 or 4.3.0				   	   -->
+	<!-- ***************************************************************** -->
+	<property name="blackberry.os.version" value="4.3.0" />
+	<property name="debug.enabled" value="false" />
+
+	<property name="wtk.home" value="C:\WTK25" />
+
+	<property name="ver" value="2.3" />
+	<property name="codename" value="SmartView" />
+
+	<property name="build.jars" location="lib/thirdparty" />
+	<property name="bbjdebuild.jars" location="${build.jars}/jde${blackberry.os.version}" />
+	<property name="net_rim_api.jar" value="${bbjdebuild.jars}/net_rim_api.jar" />
+	<property name="signerpassapp" value="autopass.exe" />
+
+	<property name="src" location="src" />
+	<property name="resources" location="res" />
+	<property name="lib" location="lib" />
+
+	<property name="unpreverified.classes" value="classes/unpreverified" />
+	<property name="obfuscated.classes" value="classes/obfuscated" />
+	<property name="final.classes" value="classes/final" />
+
+	<property name="name" value="${codename}" />
+	<property name="jad.template" value="jad.template" />
+	<property name="alx.template" value="alx.template" />
+	<property name="jadfile" value="output/tojar/${name}.jad" />
+	<property name="alxfile" value="output/tocod/${name}.alx" />
+	<property name="jarfile" value="output/tojar/${name}.jar" />
+	<property name="ota.dir" value="output/tocod/ota" />
+	<property name="bbdm.dir" value="output/tocod/bbdm" />
+
+	<property name="final.jar" value="output/tojar/${name}.jar" />
+
+	<property name="wtk.home" value="${j2mewtk.home}" />
+	<property name="wtk.cldc.version" value="1.1" />
+	<property name="wtk.midp.version" value="2.0" />
+	<property name="antenna.jar" value="antenna-bin-0.9.14.jar" />
+
+	<taskdef name="wtkbuild" classname="de.pleumann.antenna.WtkBuild" classpath="${build.jars}/${antenna.jar}" />
+	<taskdef name="wtkpreverify" classname="de.pleumann.antenna.WtkPreverify" classpath="${build.jars}/${antenna.jar}" />
+	<taskdef name="wtkpackage" classname="de.pleumann.antenna.WtkPackage" classpath="${build.jars}/${antenna.jar}" />
+
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="${build.jars}/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
+	<target name="clean">
+		<delete file="${name}.jad" />
+		<delete file="${name}.jar" />
+		<delete file="${codename}.cod" />
+		<delete file="${codename}.lst" />
+		<delete>
+			<fileset dir="." includes="*.debug" />
+		</delete>
+		<delete file="${codename}.csl" />
+		<delete file="${codename}.cso" />
+		<delete file="LogFile.txt" />
+		<delete dir="classes" />
+		<delete dir="output" />
+	</target>
+
+	<target name="init" depends="clean">
+		<mkdir dir="classes" />
+		<mkdir dir="${unpreverified.classes}" />
+		<mkdir dir="${final.classes}" />
+		<mkdir dir="output" />
+		<mkdir dir="output/tojar" />
+		<mkdir dir="output/tocod" />
+		<mkdir dir="output/tocod/ota" />
+		<mkdir dir="output/tocod/bbdm" />
+	</target>
+
+	<target name="src-replace" depends="init">
+		<echo file="src/com/bbsmart/pda/blackberry/smartview/BuildVersion.java" append="false">
+package com.bbsmart.pda.blackberry.smartview;
+
+public class BuildVersion {
+	public final static String OS_VERSION = "${blackberry.os.version}";
+}
+		</echo>
+		
+		
+		<!-- OS v4.0.2 specific conditional flags -->
+		<condition property="s402.token" value="*/">
+			<equals arg1="${blackberry.os.version}" arg2="4.0.2" />
+		</condition>
+
+		<condition property="e402.token" value="/*">
+			<equals arg1="${blackberry.os.version}" arg2="4.0.2" />
+		</condition>
+
+		<!-- OS v4.1.0 specific conditional flags -->
+		<condition property="s410.token" value="*/">
+			<equals arg1="${blackberry.os.version}" arg2="4.1.0" />
+		</condition>
+
+		<condition property="e410.token" value="/*">
+			<equals arg1="${blackberry.os.version}" arg2="4.1.0" />
+		</condition>
+
+		<!-- OS v4.2.0 specific conditional flags -->
+		<condition property="s420.token" value="*/">
+			<equals arg1="${blackberry.os.version}" arg2="4.2.0" />
+		</condition>
+
+		<condition property="e420.token" value="/*">
+			<equals arg1="${blackberry.os.version}" arg2="4.2.0" />
+		</condition>
+		
+		<!-- OS v4.3.0 specific conditional flags -->
+		<condition property="s430.token" value="*/">
+			<equals arg1="${blackberry.os.version}" arg2="4.3.0" />
+		</condition>
+
+		<condition property="e430.token" value="/*">
+			<equals arg1="${blackberry.os.version}" arg2="4.3.0" />
+		</condition>
+
+		<!-- If not set already make sure that they are defined but empty -->
+		<property name="s402.token" value="" />
+		<property name="e402.token" value="" />
+		<property name="s410.token" value="" />
+		<property name="e410.token" value="" />
+		<property name="s420.token" value="" />
+		<property name="e420.token" value="" />
+		<property name="s430.token" value="" />
+		<property name="e430.token" value="" />
+
+		<copy todir="${src}-${blackberry.os.version}">
+			<fileset dir="${src}">
+				<include name="**/*.java" />
+			</fileset>
+			<filterset begintoken="//[" endtoken="]">
+				<filter token="s402" value="${s402.token}" />
+				<filter token="e402" value="${e402.token}" />
+				<filter token="s410" value="${s410.token}" />
+				<filter token="e410" value="${e410.token}" />
+				<filter token="s420" value="${s420.token}" />
+				<filter token="e420" value="${e420.token}" />
+				<filter token="s430" value="${s430.token}" />
+				<filter token="e430" value="${e430.token}" />
+			</filterset>
+		</copy>
+
+		<!-- Change over the source directory now prior to compilation -->
+		<property name="src.ver" location="${src}-${blackberry.os.version}" />
+	</target>
+
+	<!-- Compile the code -->
+	<target name="javacompile" depends="src-replace">
+		<wtkbuild srcdir="${src.ver}" debug="false" destdir="${unpreverified.classes}" bootclasspath="${net_rim_api.jar}" />
+
+		<!-- Now remove the temporary source directory created -->
+		<delete failonerror="false" includeEmptyDirs="true">
+			<fileset dir="${basedir}" includes="src-*/" />
+		</delete>
+	</target>
+
+	<!-- Preverify the compiled code -->
+	<target name="preverify" depends="javacompile">
+		<wtkpreverify srcdir="${unpreverified.classes}" destdir="${final.classes}" classpath="${net_rim_api.jar}" />
+	</target>
+
+	<!-- Version the JAD and ALX Files -->
+	<target name="version" depends="preverify">
+		<!-- Version the JAD file -->
+		<filter token="buildVer" value="${ver}" />
+		<filter token="midletName" value="${name}" />
+		<filter token="jarName" value="${name}.jar" />
+		<copy file="${jad.template}" tofile="${jadfile}" filtering="true" overwrite="true" />
+		<copy file="${alx.template}" tofile="${alxfile}" filtering="true" overwrite="true" />
+	</target>
+
+	<!-- Package (JAR) the compiled classes. This also modifies the JAD file with JAR size information -->
+	<target name="package" depends="version">
+		<wtkpackage jarfile="${final.jar}" jadfile="${jadfile}">
+			<fileset dir="${final.classes}" />
+			<fileset dir="${resources}" casesensitive="no">
+				<!-- Only include the actual images themselves -->
+				<include name="**/*.jpg" />
+				<include name="**/*.png" />
+				<include name="**/*.gif" />
+			</fileset>
+		</wtkpackage>
+	</target>
+
+	<!-- Invoke the RAPC compiler. This step is based the RAPC's usage: rapc.exe import=RIM_APIs codename=Codename JAD-File JAR-File -->
+	<target name="rapc" depends="package" description="RIM COD Compiler">
+		<exec dir="." executable="${bbjdebuild.jars}/rapc.exe">
+			<arg line=" import=&quot;${net_rim_api.jar}&quot; " />
+			<arg line=" codename=${codename} " />
+			<arg line=" ${jadfile} " />
+			<arg line=" ${jarfile} " />
+		</exec>
+	</target>
+
+	<target name="sign" depends="rapc" description="Signs the cod file; necessary for deployment">
+		<if>
+			<equals arg1="${debug.enabled}" arg2="false" />
+			<then>
+				<!-- Execute the app to auto enter in the signing password -->
+				<exec dir="." executable="${signerpassapp}" />
+			</then>
+		</if>
+	</target>
+
+	<!-- Once the COD file has been generated & signed, move generated file to output directory -->
+	<target name="build" depends="sign">
+		<move file="${codename}.cod" tofile="output/tocod/${codename}.cod" />
+		<move todir="output/tocod">
+			<fileset dir="." includes="*.debug" />
+		</move>
+		<move file="${codename}.cso" tofile="output/tocod/${codename}.cso" />
+		<copy file="${jadfile}" tofile="output/tocod/${codename}.jad" />
+
+		<!-- Setup the OTA and BBDM directories which contain final files necessary for deployment -->
+		<copy file="${jadfile}" tofile="${ota.dir}/${codename}.jad" />
+		<copy file="output/tocod/${codename}.cod" tofile="${ota.dir}/${codename}_temp.cod" />
+		<unzip src="${ota.dir}/${codename}_temp.cod" dest="${ota.dir}" />
+		<delete file="${ota.dir}/${codename}_temp.cod" />
+	</target>
+
+	<target name="updatesim" depends="build" description="Update BlackBerry Simulator">
+		<property name="blackberry.simulator.path" value="C:\Program Files\Research In Motion\BlackBerry JDE 4.3.0\simulator" />
+		<copy todir="${blackberry.simulator.path}/">
+			<fileset dir="output/tocod" />
+		</copy>
+	</target>
+
+	<target name="7230-run">
+		<property name="blackberry.simulator.path" value="C:\Program Files\Research In Motion\BlackBerry JDE 4.0.2\simulator" />
+		<antcall target="updatesim" />
+		<exec dir="${blackberry.simulator.path}" executable="${blackberry.simulator.path}/../bin/fledge.exe">
+			<arg line=" /app=Jvm.dll " />
+			<arg line=" /handheld=7230 " />
+			<arg line=" /app-param=DisableRegistration " />
+			<arg line=" /app-param=JvmAlxConfigFile:7230.xml " />
+			<arg line=" /data-port=0x4d44 " />
+			<arg line=" /data-port=0x4d4e " />
+			<arg line=" /pin=0x2100000A " />
+		</exec>
+	</target>
+
+	<target name="7290-run">
+		<property name="blackberry.simulator.path" value="C:\Program Files\Research In Motion\BlackBerry JDE 4.1.0\simulator" />
+		<antcall target="updatesim" />
+		<exec dir="${blackberry.simulator.path}" executable="${blackberry.simulator.path}/../bin/fledge.exe">
+			<arg line=" /app=Jvm.dll " />
+			<arg line=" /handheld=7290 " />
+			<arg line=" /app-param=DisableRegistration " />
+			<arg line=" /app-param=JvmAlxConfigFile:7290.xml " />
+			<arg line=" /data-port=0x4d44 " />
+			<arg line=" /data-port=0x4d4e " />
+			<arg line=" /pin=0x2100000A " />
+		</exec>
+	</target>
+
+	<target name="8700g-run">
+		<property name="blackberry.simulator.path" value="C:\Program Files\Research In Motion\BlackBerry Device Simulators 4.1.0\Device Simulators 4.1.0.286" />
+		<antcall target="updatesim" />
+		<exec dir="${blackberry.simulator.path}" executable="${blackberry.simulator.path}/fledge.exe">
+			<arg line=" /app=Jvm.dll " />
+			<arg line=" /handheld=8700g " />
+			<arg line=" /app-param=DisableRegistration " />
+			<arg line=" /app-param=JvmAlxConfigFile:8700g.xml " />
+			<arg line=" /data-port=0x4d44 " />
+			<arg line=" /data-port=0x4d4e " />
+			<arg line=" /pin=0x2100000A " />
+		</exec>
+	</target>
+</project>
